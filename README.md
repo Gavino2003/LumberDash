@@ -6,12 +6,7 @@ An endless runner built in Unity where you play as Groot — running through a f
 
 ## Demo
 
-<!-- Para adicionar o vídeo: faz upload no GitHub (arrasta para um Issue/PR) e substitui o link abaixo -->
-> 🎥 *Vídeo em breve — arrasta um clip para um Issue do GitHub para obteres o link e cola aqui.*
-
-<!--
-[![Watch the demo](https://img.youtube.com/vi/VIDEO_ID/maxresdefault.jpg)](https://www.youtube.com/watch?v=VIDEO_ID)
--->
+https://github.com/user-attachments/assets/b15e62ef-0173-4a7d-bd4e-9bd28effa6ab
 
 ---
 
