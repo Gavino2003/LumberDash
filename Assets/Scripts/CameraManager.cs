@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
+// Gere a câmera: posição de menu, sequência de intro cinemática, transição para gameplay e follow do jogador.
 public class CameraManager : MonoBehaviour
 {
     [Header("Intro")]

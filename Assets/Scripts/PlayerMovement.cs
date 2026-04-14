@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
 
+// Controla o movimento do jogador: troca de lane, salto, roll e animações associadas.
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Salto")]
@@ -18,11 +19,11 @@ public class PlayerMovement : MonoBehaviour
     private Rigidbody rb;
     private CapsuleCollider capsuleCollider;
     private bool isGrounded = false;
-    private int currentLane = 1;
+    private int currentLane = 1;       // 0 = esquerda, 1 = centro, 2 = direita
     private float targetX = 0f;
     private float rollTimer = 0f;
     private bool isRolling = false;
-    private bool pendingRoll = false;
+    private bool pendingRoll = false;  // roll pedido no ar, executado ao aterrar
     private bool isDashing = false;
     private Animator animator;
     private Vector3 originalColliderCenter;
@@ -36,12 +37,13 @@ public class PlayerMovement : MonoBehaviour
         capsuleCollider = GetComponent<CapsuleCollider>();
         originalColliderCenter = capsuleCollider.center;
         originalColliderHeight = capsuleCollider.height;
-         chaser = FindFirstObjectByType<Chaser>();
+        chaser = FindFirstObjectByType<Chaser>();
     }
 
     void Update()
     {
         if (GameManager.Instance.IsWaiting) return;
+
         // Salto
         if ((Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.upArrowKey.wasPressedThisFrame) && isGrounded)
         {
@@ -55,7 +57,6 @@ public class PlayerMovement : MonoBehaviour
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             isGrounded = false;
             animator.SetTrigger("Jump");
-
             chaser?.OnPlayerJump();
         }
 
@@ -64,7 +65,7 @@ public class PlayerMovement : MonoBehaviour
         {
             currentLane--;
             targetX = (currentLane - 1) * laneDistance;
-             chaser?.OnPlayerChangeLane(targetX);
+            chaser?.OnPlayerChangeLane(targetX);
             if (!isRolling)
             {
                 animator.SetTrigger("DashLeft");
@@ -77,7 +78,7 @@ public class PlayerMovement : MonoBehaviour
         {
             currentLane++;
             targetX = (currentLane - 1) * laneDistance;
-             chaser?.OnPlayerChangeLane(targetX);
+            chaser?.OnPlayerChangeLane(targetX);
             if (!isRolling)
             {
                 animator.SetTrigger("DashRight");
@@ -91,6 +92,7 @@ public class PlayerMovement : MonoBehaviour
         {
             if (!isGrounded)
             {
+                // No ar: cair imediatamente e fazer roll ao aterrar
                 AudioManager.Instance.PlayRoll();
                 rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
                 rb.AddForce(Vector3.down * fallForce, ForceMode.Impulse);
@@ -113,6 +115,7 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    // Espera o jogador chegar à lane antes de terminar a animação de dash
     IEnumerator StopDash()
     {
         float distanceToTarget = Mathf.Abs(rb.position.x - targetX);
@@ -122,19 +125,20 @@ public class PlayerMovement : MonoBehaviour
     }
 
     void StartRoll()
-{
-    AudioManager.Instance.PlayRoll();
-    isRolling = true;
-    rollTimer = 0f;
-    capsuleCollider.height = originalColliderHeight * 0.5f;
-    capsuleCollider.center = new Vector3(
-        originalColliderCenter.x,
-        originalColliderCenter.y - (originalColliderHeight * 0.25f),
-        originalColliderCenter.z
-    );
-    animator.SetTrigger("Roll");
-    animator.SetBool("IsRolling", true);
-}
+    {
+        AudioManager.Instance.PlayRoll();
+        isRolling = true;
+        rollTimer = 0f;
+        // Reduz o collider a metade para passar por baixo de obstáculos
+        capsuleCollider.height = originalColliderHeight * 0.5f;
+        capsuleCollider.center = new Vector3(
+            originalColliderCenter.x,
+            originalColliderCenter.y - (originalColliderHeight * 0.25f),
+            originalColliderCenter.z
+        );
+        animator.SetTrigger("Roll");
+        animator.SetBool("IsRolling", true);
+    }
 
     void StopRoll()
     {
@@ -145,22 +149,23 @@ public class PlayerMovement : MonoBehaviour
         animator.SetBool("IsRolling", false);
     }
 
+    // Chamado ao colidir lateralmente: empurra o jogador uma lane na direção do impacto.
+    // direction: +1 = empurra para a direita, -1 = empurra para a esquerda
     public void PushToLane(int direction)
-{
-    
-    currentLane = Mathf.Clamp(currentLane + direction, 0, 2);
-    targetX = (currentLane - 1) * laneDistance;
-    animator.SetTrigger("Stumble");
-    chaser?.StartChasing();
-    chaser?.OnPlayerChangeLane(targetX);
-
-    // Se estiver no ar cai ao bater
-    if (!isGrounded)
     {
-        rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-        rb.AddForce(Vector3.down * fallForce * 0.5f, ForceMode.Impulse);
+        currentLane = Mathf.Clamp(currentLane + direction, 0, 2);
+        targetX = (currentLane - 1) * laneDistance;
+        animator.SetTrigger("Stumble");
+        chaser?.StartChasing();
+        chaser?.OnPlayerChangeLane(targetX);
+
+        // Se estiver no ar, cai ao receber o impacto
+        if (!isGrounded)
+        {
+            rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+            rb.AddForce(Vector3.down * fallForce * 0.5f, ForceMode.Impulse);
+        }
     }
-}
 
     public void StopPlayer()
     {
@@ -189,9 +194,9 @@ public class PlayerMovement : MonoBehaviour
         animator.ResetTrigger("DashRight");
         animator.ResetTrigger("Stumble");
         animator.ResetTrigger("Side_Death");
-        
     }
 
+    // Move o jogador para a lane-alvo via física (Rigidbody.MovePosition)
     void FixedUpdate()
     {
         Vector3 pos = rb.position;
@@ -200,25 +205,26 @@ public class PlayerMovement : MonoBehaviour
     }
 
     void OnCollisionStay(Collision collision)
-{
-    if (collision.gameObject.CompareTag("Ground"))
     {
-        isGrounded = true;
-
-        if (pendingRoll)
+        if (collision.gameObject.CompareTag("Ground"))
         {
-            pendingRoll = false;
-            isRolling = true;
-            rollTimer = 0f;
-            capsuleCollider.height = originalColliderHeight * 0.5f;
-            capsuleCollider.center = new Vector3(
-                originalColliderCenter.x,
-                originalColliderCenter.y - (originalColliderHeight * 0.25f),
-                originalColliderCenter.z
-            );
+            isGrounded = true;
+
+            // Executa o roll pendente assim que o jogador aterra
+            if (pendingRoll)
+            {
+                pendingRoll = false;
+                isRolling = true;
+                rollTimer = 0f;
+                capsuleCollider.height = originalColliderHeight * 0.5f;
+                capsuleCollider.center = new Vector3(
+                    originalColliderCenter.x,
+                    originalColliderCenter.y - (originalColliderHeight * 0.25f),
+                    originalColliderCenter.z
+                );
+            }
         }
     }
-}
 
     void OnCollisionExit(Collision collision)
     {
@@ -230,16 +236,18 @@ public class PlayerMovement : MonoBehaviour
     {
         animator.SetTrigger("Side_Death");
     }
-    public void PlayFrontHitAnimation()
-{
-    animator.SetTrigger("Front_Hit");
-}
-public void StartRunning()
-{
-    animator.SetTrigger("StartRun");
-}
 
-public void StartWaiting()
+    public void PlayFrontHitAnimation()
+    {
+        animator.SetTrigger("Front_Hit");
+    }
+
+    public void StartRunning()
+    {
+        animator.SetTrigger("StartRun");
+    }
+
+    public void StartWaiting()
     {
         animator.ResetTrigger("StartRun");
         animator.Play("idle_fixed", 0, 0f);

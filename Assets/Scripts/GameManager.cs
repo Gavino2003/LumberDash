@@ -3,6 +3,7 @@ using TMPro;
 using System.Collections;
 using UnityEngine.InputSystem;
 
+// Singleton que gere o estado global do jogo: velocidade, distância, moedas, Game Over e reset.
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
@@ -72,6 +73,7 @@ public class GameManager : MonoBehaviour
         distanceText.text = Mathf.FloorToInt(distance) + "m";
     }
 
+    // Animação de pulse suave nas imagens de tutorial enquanto o jogo aguarda input
     void PulseTutorial()
     {
         float scale = Mathf.Lerp(pulseMin, pulseMax, (Mathf.Sin(Time.time * pulseSpeed) + 1f) / 2f);
@@ -103,7 +105,6 @@ public class GameManager : MonoBehaviour
         player.StopPlayer();
         cameraManager.ShakeCamera();
         cameraManager.PlayLumberjackHidden();
-        Debug.Log("GAME OVER");
         StartCoroutine(ResetAfterDelay(3f));
     }
 
@@ -143,6 +144,7 @@ public class GameManager : MonoBehaviour
         coinText.text = coins.ToString();
     }
 
+    // Reduz temporariamente a velocidade após colisão lateral
     public void ApplyHitSlow()
     {
         speedBeforeHit = CurrentSpeed;

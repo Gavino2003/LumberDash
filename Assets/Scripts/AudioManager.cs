@@ -1,6 +1,8 @@
 using UnityEngine;
 using System.Collections;
 
+// Singleton que gere todos os sons do jogo: música (com fade), SFX e footsteps em loop.
+// Usa 3 AudioSources separados: musicSource, sfxSource e footstepsSource.
 public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance;
@@ -52,7 +54,6 @@ public class AudioManager : MonoBehaviour
 
     public void StartFootsteps()
     {
-        Debug.Log("StartFootsteps chamado — clip: " + footstepsSound);
         footstepsSource.clip = footstepsSound;
         footstepsSource.loop = true;
         footstepsSource.volume = footstepsVolume;

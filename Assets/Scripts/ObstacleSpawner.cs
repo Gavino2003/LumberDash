@@ -1,5 +1,7 @@
 using UnityEngine;
 
+// Gera padrões de obstáculos e moedas proceduralmente.
+// A dificuldade escala com a velocidade: mais padrões hard à medida que o jogo acelera.
 public class ObstacleSpawner : MonoBehaviour
 {
     [Header("Prefabs")]
@@ -173,6 +175,8 @@ public class ObstacleSpawner : MonoBehaviour
         Instantiate(prefab, spawnPos, rotation);
     }
 
+    // Escolhe um padrão com base na velocidade atual:
+    // velocidade baixa → maioria easy; velocidade máxima → até 60% hard
     int[] ChoosePattern()
     {
         float speedRatio = (GameManager.Instance.CurrentSpeed - GameManager.Instance.initialSpeed) /

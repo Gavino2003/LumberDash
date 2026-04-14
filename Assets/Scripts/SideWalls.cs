@@ -1,5 +1,7 @@
 using UnityEngine;
 
+// Spawna decorações laterais (árvores, etc.) periodicamente à frente do jogador
+// para criar a sensação de profundidade na floresta.
 public class SideWalls : MonoBehaviour
 {
     public Transform player;

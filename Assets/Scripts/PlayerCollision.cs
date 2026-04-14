@@ -1,9 +1,11 @@
 using UnityEngine;
 
+// Deteta colisões com obstáculos e distingue impacto frontal (Game Over imediato)
+// de impacto lateral (empurra o jogador; ao 2.º impacto dentro da janela de tempo é Game Over).
 public class PlayerCollision : MonoBehaviour
 {
-    public float lateralThreshold = 0.5f;
-    public float lateralImpactWindow = 3f;
+    public float lateralThreshold = 0.5f;   // diferença mínima em X para considerar lateral
+    public float lateralImpactWindow = 3f;  // janela de tempo para contar 2 impactos laterais
 
     private PlayerMovement playerMovement;
     private int lateralImpactCount = 0;
@@ -16,8 +18,6 @@ public class PlayerCollision : MonoBehaviour
 
     void Update()
     {
-       
-
         if (lateralImpactCount > 0)
         {
             lateralImpactTimer += Time.deltaTime;
@@ -32,22 +32,21 @@ public class PlayerCollision : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Obstacle"))
-
         {
-            
             float diff = other.transform.position.x - transform.position.x;
 
             if (Mathf.Abs(diff) < lateralThreshold)
-{
-    Debug.Log("Impacto FRONTAL - Game Over");
-    playerMovement.PlayFrontHitAnimation();
-    GameManager.Instance.GameOver();
-}
+            {
+                // Impacto frontal direto — Game Over imediato
+                playerMovement.PlayFrontHitAnimation();
+                GameManager.Instance.GameOver();
+            }
             else
-{
-    GameManager.Instance.ApplyHitSlow();
-    RegisterLateralImpact(diff);
-}
+            {
+                // Impacto lateral — abranda e regista; ao 2.º impacto é Game Over
+                GameManager.Instance.ApplyHitSlow();
+                RegisterLateralImpact(diff);
+            }
         }
     }
 

@@ -1,5 +1,6 @@
 using UnityEngine;
 
+// Faz a moeda rodar no eixo Y e deteta colisão com o jogador para a recolher.
 public class CoinBehaviour : MonoBehaviour
 {
     public float rotationSpeed = 180f;

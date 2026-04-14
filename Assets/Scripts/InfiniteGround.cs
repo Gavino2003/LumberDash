@@ -1,5 +1,7 @@
 using UnityEngine;
 
+// Gere um conjunto de tiles de chão em loop: quando um tile passa atrás do jogador,
+// é reposicionado à frente do tile mais avançado, criando a ilusão de chão infinito.
 public class InfiniteGround : MonoBehaviour
 {
     public GameObject groundTilePrefab;
@@ -37,15 +39,15 @@ public class InfiniteGround : MonoBehaviour
             }
         }
     }
-public void ResetGround()
-{
-    float resetZ = 0f;
-    foreach (GameObject tile in tiles)
+    public void ResetGround()
     {
-        tile.transform.position = new Vector3(0f, 0f, resetZ);
-        resetZ += tileLength;
+        float resetZ = 0f;
+        foreach (GameObject tile in tiles)
+        {
+            tile.transform.position = new Vector3(0f, 0f, resetZ);
+            resetZ += tileLength;
+        }
     }
-}
     float GetFurthestTileZ()
     {
         float furthest = float.MinValue;
