@@ -6,7 +6,6 @@ using UnityEngine.InputSystem;
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
-
     public float hitSpeedMultiplier = 0.5f;
     public float hitSlowDuration = 2f;
     private float speedBeforeHit = 0f;
@@ -26,11 +25,15 @@ public class GameManager : MonoBehaviour
     [Header("Moedas")]
     public TextMeshProUGUI coinText;
 
+    [Header("Tutorial")]
+    public GameObject[] tutorialImages;
+    public float pulseMin = 0.9f;
+    public float pulseMax = 1.1f;
+    public float pulseSpeed = 2f;
+
     public float CurrentSpeed { get; private set; }
     public bool IsGameOver { get; private set; }
     public bool IsWaiting { get; private set; } = true;
-
-
     private bool isPlayingIntro = false;
     private float distance = 0f;
     private int coins = 0;
@@ -52,6 +55,8 @@ public class GameManager : MonoBehaviour
     {
         if (IsWaiting && !isPlayingIntro)
         {
+            PulseTutorial();
+
             if (Mouse.current.leftButton.wasPressedThisFrame)
             {
                 isPlayingIntro = true;
@@ -67,8 +72,18 @@ public class GameManager : MonoBehaviour
         distanceText.text = Mathf.FloorToInt(distance) + "m";
     }
 
+    void PulseTutorial()
+    {
+        float scale = Mathf.Lerp(pulseMin, pulseMax, (Mathf.Sin(Time.time * pulseSpeed) + 1f) / 2f);
+        foreach (GameObject img in tutorialImages)
+            if (img != null) img.transform.localScale = Vector3.one * scale;
+    }
+
     IEnumerator StartGame()
     {
+        foreach (GameObject img in tutorialImages)
+            if (img != null) img.SetActive(false);
+
         yield return StartCoroutine(cameraManager.PlayIntro());
         yield return StartCoroutine(cameraManager.TransitionToGame());
         AudioManager.Instance.FadeUp();
@@ -79,18 +94,18 @@ public class GameManager : MonoBehaviour
         player.StartRunning();
     }
 
-   public void GameOver()
-{
-    if (IsGameOver) return;
-    AudioManager.Instance.StopFootsteps();
-    AudioManager.Instance.PlayGameOver();
-    IsGameOver = true;
-    player.StopPlayer();
-    cameraManager.ShakeCamera();
-    cameraManager.PlayLumberjackHidden();
-    Debug.Log("GAME OVER");
-    StartCoroutine(ResetAfterDelay(3f));
-}
+    public void GameOver()
+    {
+        if (IsGameOver) return;
+        AudioManager.Instance.StopFootsteps();
+        AudioManager.Instance.PlayGameOver();
+        IsGameOver = true;
+        player.StopPlayer();
+        cameraManager.ShakeCamera();
+        cameraManager.PlayLumberjackHidden();
+        Debug.Log("GAME OVER");
+        StartCoroutine(ResetAfterDelay(3f));
+    }
 
     IEnumerator ResetAfterDelay(float delay)
     {
@@ -99,26 +114,28 @@ public class GameManager : MonoBehaviour
     }
 
     void ResetGame()
-{
-    IsWaiting = true;
-    isPlayingIntro = false;
-    IsGameOver = false;
-    CurrentSpeed = initialSpeed;
-    distance = 0f;
-    distanceText.text = "0m";
-    distancePanel.gameObject.SetActive(false);
-    cameraManager.ResetToMenu();
+    {
+        IsWaiting = true;
+        isPlayingIntro = false;
+        IsGameOver = false;
+        CurrentSpeed = initialSpeed;
+        distance = 0f;
+        coins = 0;
+        distanceText.text = "0m";
+        coinText.text = "0";
+        distancePanel.gameObject.SetActive(false);
+        cameraManager.ResetToMenu();
+        foreach (GameObject obstacle in GameObject.FindGameObjectsWithTag("Obstacle"))
+            Destroy(obstacle);
+        foreach (GameObject coin in GameObject.FindGameObjectsWithTag("Coin"))
+            Destroy(coin);
+        FindFirstObjectByType<InfiniteGround>().ResetGround();
+        player.ResetPlayer();
+        player.StartWaiting();
 
-    foreach (GameObject obstacle in GameObject.FindGameObjectsWithTag("Obstacle"))
-        Destroy(obstacle);
-
-    foreach (GameObject coin in GameObject.FindGameObjectsWithTag("Coin"))
-        Destroy(coin);
-
-    FindFirstObjectByType<InfiniteGround>().ResetGround();
-    player.ResetPlayer();
-    player.StartWaiting(); // só aqui depois de tudo resetado
-}
+        foreach (GameObject img in tutorialImages)
+            if (img != null) img.SetActive(true);
+    }
 
     public void AddCoin()
     {

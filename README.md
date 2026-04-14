@@ -4,6 +4,17 @@ An endless runner built in Unity where you play as Groot — running through a f
 
 ---
 
+## Demo
+
+<!-- Para adicionar o vídeo: faz upload no GitHub (arrasta para um Issue/PR) e substitui o link abaixo -->
+> 🎥 *Vídeo em breve — arrasta um clip para um Issue do GitHub para obteres o link e cola aqui.*
+
+<!--
+[![Watch the demo](https://img.youtube.com/vi/VIDEO_ID/maxresdefault.jpg)](https://www.youtube.com/watch?v=VIDEO_ID)
+-->
+
+---
+
 ## Gameplay
 
 - **3 lanes** — switch left and right to avoid obstacles
@@ -32,6 +43,7 @@ An endless runner built in Unity where you play as Groot — running through a f
 - Cinematic intro camera sequence on game start
 - Full audio system — music, footsteps, jump, roll, hits, game over
 - Auto-reset after game over with full state cleanup
+- Tutorial screen with pulse animation on the start screen
 - URP rendering with post-processing
 
 ---
