@@ -36,6 +36,10 @@ ExportedObj/
 # Unity3D generated file on crash reports
 sysinfo.txt
 
+# Unity auto-recovery scenes
+Assets/_Recovery/
+Assets/_Recovery.meta
+
 # Builds
 *.apk
 *.aab
