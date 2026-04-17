@@ -42,10 +42,6 @@ public class CameraManager : MonoBehaviour
 
     private Vector3 offset;
     private bool isFollowing = false;
-    private bool shakePlayed = false;
-    private bool surprisePlayed = false;
-    private bool screamPlayed = false;
-    private bool grootPlayed = false;
 
     void Start()
     {
@@ -82,6 +78,7 @@ public class CameraManager : MonoBehaviour
         lumberjackAnimator.Play(lumberjackIntroAnim);
 
         float elapsed = 0f;
+        bool shakePlayed = false, surprisePlayed = false, screamPlayed = false, grootPlayed = false;
 
         while (elapsed < introDuration)
         {
@@ -92,19 +89,16 @@ public class CameraManager : MonoBehaviour
                 shakePlayed = true;
                 ShakeCamera();
             }
-
             if (elapsed >= surpriseSoundDelay && !surprisePlayed)
             {
                 surprisePlayed = true;
                 AudioManager.Instance.PlaySurprise();
             }
-
             if (elapsed >= screamSoundDelay && !screamPlayed)
             {
                 screamPlayed = true;
                 AudioManager.Instance.PlayScream();
             }
-
             if (elapsed >= grootAnimDelay && !grootPlayed)
             {
                 grootPlayed = true;
@@ -113,11 +107,6 @@ public class CameraManager : MonoBehaviour
 
             yield return null;
         }
-
-        shakePlayed = false;
-        surprisePlayed = false;
-        screamPlayed = false;
-        grootPlayed = false;
     }
 
     public IEnumerator TransitionToGame()

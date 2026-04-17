@@ -54,6 +54,8 @@ https://github.com/user-attachments/assets/b15e62ef-0173-4a7d-bd4e-9bd28effa6ab
 - Auto-reset after game over with full state cleanup
 - Tutorial screen with pulse animation on the start screen
 - Lumberjack AI that mirrors player movement with a delay
+- Distance highscore tracked and saved between sessions
+- Shop: spend 150 coins to double distance for the next run
 - URP rendering with post-processing
 
 ---

@@ -23,8 +23,9 @@ public class PlayerMovement : MonoBehaviour
     private float targetX = 0f;
     private float rollTimer = 0f;
     private bool isRolling = false;
-    private bool pendingRoll = false;  // roll pedido no ar, executado ao aterrar
-    private bool isDashing = false;
+    private bool pendingRoll = false;   // roll pedido no ar, executado ao aterrar
+    private bool pendingJump = false;   // força do salto aplicada no FixedUpdate
+    private bool pendingFall = false;   // força de queda aplicada no FixedUpdate
     private Animator animator;
     private Vector3 originalColliderCenter;
     private float originalColliderHeight;
@@ -47,14 +48,10 @@ public class PlayerMovement : MonoBehaviour
         // Salto
         if ((Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.upArrowKey.wasPressedThisFrame) && isGrounded)
         {
-            if (isRolling)
-            {
-                StopRoll();
-                rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-            }
+            if (isRolling) StopRoll();
             pendingRoll = false;
+            pendingJump = true;
             AudioManager.Instance.PlayJump();
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             isGrounded = false;
             animator.SetTrigger("Jump");
             chaser?.OnPlayerJump();
@@ -94,8 +91,7 @@ public class PlayerMovement : MonoBehaviour
             {
                 // No ar: cair imediatamente e fazer roll ao aterrar
                 AudioManager.Instance.PlayRoll();
-                rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-                rb.AddForce(Vector3.down * fallForce, ForceMode.Impulse);
+                pendingFall = true;
                 pendingRoll = true;
                 animator.SetTrigger("Roll");
                 animator.SetBool("IsRolling", true);
@@ -129,15 +125,20 @@ public class PlayerMovement : MonoBehaviour
         AudioManager.Instance.PlayRoll();
         isRolling = true;
         rollTimer = 0f;
-        // Reduz o collider a metade para passar por baixo de obstáculos
+        ShrinkCollider();
+        animator.SetTrigger("Roll");
+        animator.SetBool("IsRolling", true);
+    }
+
+    // Reduz o collider a metade para passar por baixo de obstáculos
+    void ShrinkCollider()
+    {
         capsuleCollider.height = originalColliderHeight * 0.5f;
         capsuleCollider.center = new Vector3(
             originalColliderCenter.x,
             originalColliderCenter.y - (originalColliderHeight * 0.25f),
             originalColliderCenter.z
         );
-        animator.SetTrigger("Roll");
-        animator.SetBool("IsRolling", true);
     }
 
     void StopRoll()
@@ -196,9 +197,23 @@ public class PlayerMovement : MonoBehaviour
         animator.ResetTrigger("Side_Death");
     }
 
-    // Move o jogador para a lane-alvo via física (Rigidbody.MovePosition)
+    // Aplica forças e move o jogador via física
     void FixedUpdate()
     {
+        if (pendingJump)
+        {
+            rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            pendingJump = false;
+        }
+
+        if (pendingFall)
+        {
+            rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+            rb.AddForce(Vector3.down * fallForce, ForceMode.Impulse);
+            pendingFall = false;
+        }
+
         Vector3 pos = rb.position;
         pos.x = Mathf.MoveTowards(rb.position.x, targetX, laneSwitchSpeed * Time.fixedDeltaTime);
         rb.MovePosition(pos);
@@ -216,12 +231,7 @@ public class PlayerMovement : MonoBehaviour
                 pendingRoll = false;
                 isRolling = true;
                 rollTimer = 0f;
-                capsuleCollider.height = originalColliderHeight * 0.5f;
-                capsuleCollider.center = new Vector3(
-                    originalColliderCenter.x,
-                    originalColliderCenter.y - (originalColliderHeight * 0.25f),
-                    originalColliderCenter.z
-                );
+                ShrinkCollider();
             }
         }
     }

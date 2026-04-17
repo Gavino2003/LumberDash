@@ -50,32 +50,23 @@ public class PlayerCollision : MonoBehaviour
         }
     }
 
-  void RegisterLateralImpact(float diff)
-{
-    AudioManager.Instance.PlayLateralImpact();
-    lateralImpactCount++;
-
-    if (lateralImpactCount >= 2)
+    void RegisterLateralImpact(float diff)
     {
-        // Primeiro empurra para a lane, depois morre
+        AudioManager.Instance.PlayLateralImpact();
+        lateralImpactCount++;
+
         if (diff < 0)
             playerMovement.PushToLane(1);
         else
             playerMovement.PushToLane(-1);
 
-        playerMovement.PlayDeathAnimation();
-        GameManager.Instance.GameOver();
-        lateralImpactCount = 0;
-        lateralImpactTimer = 0f;
+        if (lateralImpactCount >= 2)
+        {
+            playerMovement.PlayDeathAnimation();
+            GameManager.Instance.GameOver();
+            lateralImpactCount = 0;
+            lateralImpactTimer = 0f;
+        }
     }
-    else
-    {
-        if (diff < 0)
-            playerMovement.PushToLane(1);
-        else
-            playerMovement.PushToLane(-1);
-    }
-    
-}
 
 }

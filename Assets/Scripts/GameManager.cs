@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using System.Collections;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 // Singleton que gere o estado global do jogo: velocidade, distância, moedas, Game Over e reset.
 public class GameManager : MonoBehaviour
@@ -22,9 +23,15 @@ public class GameManager : MonoBehaviour
     [Header("UI")]
     public TextMeshProUGUI distanceText;
     public GameObject distancePanel;
+    public TextMeshProUGUI highScoreText;
 
     [Header("Moedas")]
     public TextMeshProUGUI coinText;
+
+    [Header("Loja")]
+    public Button distanceBoostButton;
+    public GameObject boostActiveIndicator;
+    private const int boostCost = 150;
 
     [Header("Tutorial")]
     public GameObject[] tutorialImages;
@@ -38,6 +45,8 @@ public class GameManager : MonoBehaviour
     private bool isPlayingIntro = false;
     private float distance = 0f;
     private int coins = 0;
+    private bool distanceBoostActive = false;
+    private int highScore = 0;
     private PlayerMovement player;
 
     void Awake()
@@ -50,6 +59,14 @@ public class GameManager : MonoBehaviour
         distancePanel.gameObject.SetActive(false);
         CurrentSpeed = initialSpeed;
         player = FindFirstObjectByType<PlayerMovement>();
+
+        coins = PlayerPrefs.GetInt("Coins", 0);
+        highScore = PlayerPrefs.GetInt("HighScore", 0);
+        UpdateCoinUI();
+        UpdateHighScoreUI();
+        UpdateBoostButton();
+        SetWaitingUIVisible(true);
+        if (boostActiveIndicator != null) boostActiveIndicator.SetActive(false);
     }
 
     void Update()
@@ -69,7 +86,7 @@ public class GameManager : MonoBehaviour
         if (IsWaiting || IsGameOver) return;
 
         CurrentSpeed = Mathf.Min(CurrentSpeed + speedIncreaseRate * Time.deltaTime, maxSpeed);
-        distance += CurrentSpeed * Time.deltaTime;
+        distance += CurrentSpeed * Time.deltaTime * (distanceBoostActive ? 2f : 1f);
         distanceText.text = Mathf.FloorToInt(distance) + "m";
     }
 
@@ -92,7 +109,9 @@ public class GameManager : MonoBehaviour
         AudioManager.Instance.StartFootsteps();
         IsWaiting = false;
         isPlayingIntro = false;
+        SetWaitingUIVisible(false);
         distancePanel.gameObject.SetActive(true);
+        if (boostActiveIndicator != null) boostActiveIndicator.SetActive(distanceBoostActive);
         player.StartRunning();
     }
 
@@ -102,6 +121,18 @@ public class GameManager : MonoBehaviour
         AudioManager.Instance.StopFootsteps();
         AudioManager.Instance.PlayGameOver();
         IsGameOver = true;
+        distanceBoostActive = false;
+        if (boostActiveIndicator != null) boostActiveIndicator.SetActive(false);
+
+        int distInt = Mathf.FloorToInt(distance);
+        if (distInt > highScore)
+        {
+            highScore = distInt;
+            PlayerPrefs.SetInt("HighScore", highScore);
+            PlayerPrefs.Save();
+            UpdateHighScoreUI();
+        }
+
         player.StopPlayer();
         cameraManager.ShakeCamera();
         cameraManager.PlayLumberjackHidden();
@@ -121,10 +152,10 @@ public class GameManager : MonoBehaviour
         IsGameOver = false;
         CurrentSpeed = initialSpeed;
         distance = 0f;
-        coins = 0;
         distanceText.text = "0m";
-        coinText.text = "0";
         distancePanel.gameObject.SetActive(false);
+        UpdateBoostButton();
+        SetWaitingUIVisible(true);
         cameraManager.ResetToMenu();
         foreach (GameObject obstacle in GameObject.FindGameObjectsWithTag("Obstacle"))
             Destroy(obstacle);
@@ -141,7 +172,44 @@ public class GameManager : MonoBehaviour
     public void AddCoin()
     {
         coins++;
-        coinText.text = coins.ToString();
+        PlayerPrefs.SetInt("Coins", coins);
+        PlayerPrefs.Save();
+        UpdateCoinUI();
+        UpdateBoostButton();
+    }
+
+    public void BuyDistanceBoost()
+    {
+        if (coins < boostCost || distanceBoostActive) return;
+        coins -= boostCost;
+        PlayerPrefs.SetInt("Coins", coins);
+        PlayerPrefs.Save();
+        distanceBoostActive = true;
+        UpdateCoinUI();
+        UpdateBoostButton();
+        if (boostActiveIndicator != null) boostActiveIndicator.SetActive(true);
+    }
+
+    void UpdateCoinUI()
+    {
+        if (coinText != null) coinText.text = coins.ToString();
+    }
+
+    void UpdateHighScoreUI()
+    {
+        if (highScoreText != null) highScoreText.text = "Best: " + highScore + "m";
+    }
+
+    void UpdateBoostButton()
+    {
+        if (distanceBoostButton != null)
+            distanceBoostButton.interactable = coins >= boostCost && !distanceBoostActive;
+    }
+
+    void SetWaitingUIVisible(bool visible)
+    {
+        if (highScoreText != null) highScoreText.gameObject.SetActive(visible);
+        if (distanceBoostButton != null) distanceBoostButton.gameObject.SetActive(visible);
     }
 
     // Reduz temporariamente a velocidade após colisão lateral

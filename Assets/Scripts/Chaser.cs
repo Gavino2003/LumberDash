@@ -22,6 +22,7 @@ public class Chaser : MonoBehaviour
     private float targetX = 0f;
     private float currentFollowDistance;
     private bool isChasing = false;
+    private bool pendingJump = false;
     private Rigidbody chaserRb;
 
     void Start()
@@ -45,6 +46,15 @@ public class Chaser : MonoBehaviour
         pos.z = Mathf.MoveTowards(pos.z, targetZ, totalSpeed * Time.deltaTime);
         pos.x = Mathf.MoveTowards(pos.x, targetX, totalSpeed * Time.deltaTime);
         transform.position = pos;
+    }
+
+    void FixedUpdate()
+    {
+        if (pendingJump)
+        {
+            chaserRb.AddForce(Vector3.up * chaserJumpForce, ForceMode.Impulse);
+            pendingJump = false;
+        }
     }
 
     // Recebe a nova posição X do jogador e replica-a com atraso
@@ -91,6 +101,6 @@ public class Chaser : MonoBehaviour
     IEnumerator ReplicateJump()
     {
         yield return new WaitForSeconds(jumpDelay);
-        chaserRb.AddForce(Vector3.up * chaserJumpForce, ForceMode.Impulse);
+        pendingJump = true;
     }
 }
