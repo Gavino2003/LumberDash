@@ -131,6 +131,12 @@ Assets/
 
 ---
 
+## Licença
+
+Este projeto está licenciado sob [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) — podes partilhar e adaptar, mas **não podes usar comercialmente**.
+
+---
+
 ## Built With
 
 - **Unity 6000.3.9f1** — game engine
